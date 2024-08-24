@@ -286,6 +286,22 @@ function missedTheSpot() {
   if (resultsElement && !autopilot) resultsElement.style.display = "flex";
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+  // Função para verificar se a tela de "Você perdeu!" está visível
+  function checkGameOver() {
+      const results = document.getElementById('results');
+      if (results.style.display === 'flex') {
+          // Se a tela de "Você perdeu!" está visível, aguarda 2 segundos e recarrega a página
+          setTimeout(function() {
+              location.reload();
+          }, 2000);
+      }
+  }
+
+  // Verifica se a tela de "Você perdeu!" está visível a cada segundo
+  setInterval(checkGameOver, 1000);
+});
+
 function animation(time) {
   if (lastTime) {
     const timePassed = time - lastTime;
@@ -342,6 +358,37 @@ function updatePhysics(timePassed) {
     element.threejs.quaternion.copy(element.cannonjs.quaternion);
   });
 }
+
+function showGameOverScreen() {
+  document.getElementById('results').style.display = 'flex'; // Mostra a tela de "Você perdeu"
+  document.getElementById('instructions').style.display = 'none'; // Esconde instruções
+  document.getElementById('score').style.display = 'none'; // Esconde a pontuação
+}
+
+function restartGame() {
+  // Lógica para reiniciar o jogo
+  document.getElementById('results').style.display = 'none'; // Esconde tela de "Você perdeu"
+  document.getElementById('instructions').style.display = 'flex'; // Mostra instruções
+  document.getElementById('score').style.display = 'block'; // Mostra pontuação
+}
+
+// Exemplo de adição de um ouvinte de clique ao botão de reinício
+document.getElementById('restart-button').addEventListener('click', restartGame);
+
+// Exemplo de código para chamar showGameOverScreen quando o jogo terminar
+function endGame() {
+  showGameOverScreen();
+}
+
+function gameOver() {
+  // Código que exibia a tela de "Você perdeu"
+  // Exemplo: document.getElementById('results').style.display = 'flex';
+
+  // Em vez disso, faça o jogo voltar para a tela de início
+  document.getElementById('instructions').style.display = 'flex';
+  // Reinicie outras variáveis do jogo conforme necessário
+}
+
 
 window.addEventListener("resize", () => {
   // Adjust camera
