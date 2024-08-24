@@ -10,7 +10,6 @@ const originalBoxSize = 3; // Original width and height of a box
 let autopilot;
 let gameEnded;
 let robotPrecision; // Determines how precise the game is on autopilot
-const touchTolerance = 0.1; // Tolerance for touch inaccuracies
 
 const scoreElement = document.getElementById("score");
 const instructionsElement = document.getElementById("instructions");
@@ -18,6 +17,7 @@ const resultsElement = document.getElementById("results");
 
 init();
 
+// Determines how precise the game is on autopilot
 function setRobotPrecision() {
   robotPrecision = Math.random() * 1 - 0.5;
 }
@@ -49,6 +49,16 @@ function init() {
     0, // near plane
     100 // far plane
   );
+
+  /*
+  // If you want to use perspective camera instead, uncomment these lines
+  camera = new THREE.PerspectiveCamera(
+    45, // field of view
+    aspect, // aspect ratio
+    1, // near plane
+    100 // far plane
+  );
+  */
 
   camera.position.set(4, 4, 4);
   camera.lookAt(0, 0, 0);
@@ -180,8 +190,17 @@ function cutBox(topLayer, overlap, size, delta) {
   topLayer.cannonjs.addShape(shape);
 }
 
+function eventHandler() {
+  if (autopilot) startGame();
+  else splitBlockAndAddNextOneIfOverlaps();
+}
+
+// Check if the device is mobile
+function isMobileDevice() {
+  return /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth <= 800;
+}
+
 window.addEventListener("mousedown", eventHandler);
-window.addEventListener("touchstart", eventHandler);
 window.addEventListener("keydown", function (event) {
   if (event.key == " ") {
     event.preventDefault();
@@ -195,9 +214,12 @@ window.addEventListener("keydown", function (event) {
   }
 });
 
-function eventHandler() {
-  if (autopilot) startGame();
-  else splitBlockAndAddNextOneIfOverlaps();
+// Touch event should only simulate the space key on mobile devices
+if (isMobileDevice()) {
+  window.addEventListener("touchstart", function (event) {
+    event.preventDefault();
+    eventHandler();
+  }, { passive: false });
 }
 
 function splitBlockAndAddNextOneIfOverlaps() {
@@ -215,8 +237,7 @@ function splitBlockAndAddNextOneIfOverlaps() {
   const overhangSize = Math.abs(delta);
   const overlap = size - overhangSize;
 
-  // Introduzindo tolerância para toques imprecisos em dispositivos móveis
-  if (overlap > touchTolerance) {
+  if (overlap > 0) {
     cutBox(topLayer, overlap, size, delta);
 
     // Overhang
@@ -251,7 +272,7 @@ function splitBlockAndAddNextOneIfOverlaps() {
 function missedTheSpot() {
   const topLayer = stack[stack.length - 1];
 
-  // Turn to overhang
+  // Turn to top layer into an overhang and let it fall down
   addOverhang(
     topLayer.threejs.position.x,
     topLayer.threejs.position.z,
@@ -262,7 +283,6 @@ function missedTheSpot() {
   scene.remove(topLayer.threejs);
 
   gameEnded = true;
-
   if (resultsElement && !autopilot) resultsElement.style.display = "flex";
 }
 
@@ -272,17 +292,34 @@ function animation(time) {
     const speed = 0.008;
 
     const topLayer = stack[stack.length - 1];
+    const previousLayer = stack[stack.length - 2];
 
-    // The top level box should move if the game hasn't ended AND
-    // it's either NOT in autopilot or it is, but the box hasn't reached the robot position
-    if (!gameEnded && (!autopilot || (autopilot && topLayer.threejs.position[topLayer.direction] < 0))) {
-      // Keep the position visible on mobile but adjust for touch
-      const delta = speed * timePassed * (autopilot ? robotPrecision : 1);
-      topLayer.threejs.position[topLayer.direction] += delta;
-      topLayer.cannonjs.position[topLayer.direction] += delta;
-    } else if (autopilot) {
-      splitBlockAndAddNextOneIfOverlaps();
-      setRobotPrecision();
+    // The top level box should move if the game has not ended AND
+    // it's either NOT in autopilot or it is in autopilot and the box did not yet reach the robot position
+    const boxShouldMove =
+      !gameEnded &&
+      (!autopilot ||
+        (autopilot &&
+          topLayer.threejs.position[topLayer.direction] <
+            previousLayer.threejs.position[topLayer.direction] +
+              robotPrecision));
+
+    if (boxShouldMove) {
+      // Keep the position visible on UI and the position in the model in sync
+      topLayer.threejs.position[topLayer.direction] += speed * timePassed;
+      topLayer.cannonjs.position[topLayer.direction] += speed * timePassed;
+
+      // If the box went beyond the stack then show up the fail screen
+      if (topLayer.threejs.position[topLayer.direction] > 10) {
+        missedTheSpot();
+      }
+    } else {
+      // If it shouldn't move then is it because the autopilot reached the correct position?
+      // Because if so then next level is coming
+      if (autopilot) {
+        splitBlockAndAddNextOneIfOverlaps();
+        setRobotPrecision();
+      }
     }
 
     // 4 is the initial camera height
@@ -308,6 +345,7 @@ function updatePhysics(timePassed) {
 
 window.addEventListener("resize", () => {
   // Adjust camera
+  console.log("resize", window.innerWidth, window.innerHeight);
   const aspect = window.innerWidth / window.innerHeight;
   const width = 10;
   const height = width / aspect;
@@ -315,6 +353,7 @@ window.addEventListener("resize", () => {
   camera.top = height / 2;
   camera.bottom = height / -2;
 
+  // Reset renderer
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.render(scene, camera);
 });
