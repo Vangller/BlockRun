@@ -15,7 +15,7 @@ body {
   justify-content: center;
   height: 100%;
   width: 100%;
-  background-color: rgba(20, 20, 20, 0.75);
+  background-color: rgba(20, 20, 20, 0.75); /* Fundo escuro com transparência */
   z-index: 10;
 }
 
@@ -28,10 +28,9 @@ body {
 #results .content {
   max-width: 300px;
   padding: 50px;
-  background-color: rgba(255, 255, 255, 0);
+  background-color: rgba(255, 255, 255, 0); /* Fundo branco com transparência */
   border-radius: 20px;
   text-align: center;
-  z-index: 20;
 }
 
 #results .content {
@@ -43,33 +42,18 @@ body {
 #reload-button {
   margin-top: 20px;
   padding: 10px 20px;
-  background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
-  background-size: 400%;
+  background-color: rgba(255, 0, 0, 0.8); /* Botão vermelho com transparência */
   color: black;
   border: none;
   border-radius: 10px;
   cursor: pointer;
   font-weight: bold;
   font-size: 1.2em;
-  transition: background-position 0.5s ease-in-out;
-  z-index: 30; /* Assegura que o botão esteja acima de outros elementos */
-  animation: rainbow 5s linear infinite; /* Adiciona a animação de arco-íris */
-}
-
-@keyframes rainbow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  transition: background-color 0.3s;
 }
 
 #reload-button:hover {
-  background-position: 100% 50%;
+  background-color: rgba(255, 0, 0, 1); /* Botão vermelho sólido ao passar o mouse */
 }
 
 #score {
@@ -85,11 +69,6 @@ body {
 @media (max-width: 768px) {
   #instructions,
   #results {
-    background-color: rgba(20, 20, 20, 0.85);
-  }
-
-  #reload-button {
-    padding: 15px 25px; /* Aumenta a área clicável em dispositivos móveis */
-    font-size: 1.5em;
+    background-color: rgba(20, 20, 20, 0.85); /* Fundo ligeiramente mais escuro para mobile */
   }
 }
